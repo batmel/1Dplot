@@ -1,4 +1,5 @@
-#!/usr/bin/env python   # THIS MUST BE THE FIRST LINE OF THE SCRIPT OTHERWISE IT HAS NO MEANING!
+#!/usr/bin/env python
+# THE LINE ABOVE MUST BE THE FIRST LINE OF THE SCRIPT OTHERWISE IT HAS NO MEANING!
 # -*- coding: utf8 -*-
 
 '''
@@ -19,14 +20,19 @@ General comments:
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+from sys import argv
+from sys import exit
 
 
 # global variables/constants you define are usually defined in capital letters
 # sets the directory with the data as global
-DIRECTORY = "/Users/Mel/OneDrive/FLUKA/SMA/plots/sample1/"
+# input_dir = "/Users/Mel/OneDrive/FLUKA/SMA/plots/sample1/"
+try:
+	input_dir = argv[1]
+except IndexError:
+	exit("Please specify input directory on command line: " + __file__ + " /path/to/dir")
 
-
-def read_file(fullpath, flag = False):
+def read_file(fullpath, integration_flag = False):
 	'''
 	reads the file and saves the values in a dataframe
 	'''
@@ -43,8 +49,8 @@ def read_file(fullpath, flag = False):
 	df.loc[:,2] *= CONVERSION_FACTOR
 
 	# we want to get the integrated data for the dose
-	# TODO: You should name your code
-	if flag:
+	# TODO: You should name your variables better: what kind of flag is it?
+	if integration_flag:
 		df[2] = df[2] * 2.2E10 * 3600 * 24 * 90 * 1E-3 # conversion factor * 90 days * kGy
 	df[3] = df[3]/100*df[2] # to get the absolute value for the errorbar
 	return df
@@ -52,6 +58,13 @@ def read_file(fullpath, flag = False):
 
 def plot_data(df, x_label, y_label, title, directory, filename):
 	''' function to plot the data '''
+
+	# use latex formatting if installed
+	try:
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif')
+	except RuntimeError:
+		print("Not using Latex. Not all dependencies are installed")
 
 	fig = plt.figure(figsize=(12,9))
 	ax = fig.add_subplot(111, aspect='auto')
@@ -102,6 +115,7 @@ def plot_data(df, x_label, y_label, title, directory, filename):
 			transform=ax.transAxes)
 
 	plt.tight_layout(pad=3, w_pad=1.0, h_pad=2)
+
 	path = "{}/{}.png".format(directory, filename)
 	fig.savefig(path.format(directory, filename), )
 
@@ -139,13 +153,13 @@ def derive_configuration(filename):
 	}
 
 	# set y label and flag
-	flag = True # TODO I didn't check the purpose, just took the logic as it was: but setting this here to True is point less...
+	integration_flag = True # TODO I didn't check the purpose, just took the logic as it was: but setting this here to True is point less...
 	y_label = "unknown"
 	for label in labels:
 		if label in filename:
 			y_label = LABEL.format(quality=labels[label], unit=units[label])
 			if label in flag_labels:
-				flag = True
+				integration_flag = True
 			break
 
 	# set x label
@@ -160,12 +174,12 @@ def derive_configuration(filename):
 	# set title
 	title = filename.replace("_", " ")
 
-	return x_label, y_label, title, flag
+	return x_label, y_label, title, integration_flag
 
-
-	# if filename.find('Dose') > 0:
-	# 			y_label = "Dose [kGy/POT]"
-	# 			flag = True					# flag = True gives the integrated data for the y values
+	# flag = True
+	# if filename.find('Dose') > 0: # sets the Axis labels automatically, if it finds a substring
+	# 	y_label = "Dose [kGy/POT]"
+	# 	flag = True					# flag = True gives the integrated data for the y values
 	# elif filename.find('1MeVN') > 0:
 	# 	y_label = "1MeVN [1/(cm^2 * POT)]"
 	# elif filename.find('HEHeq') > 0:
@@ -198,7 +212,7 @@ def derive_configuration(filename):
 
 
 if __name__ == "__main__":
-	for f in os.listdir(DIRECTORY): #checks the directory for all .dat files
+	for f in os.listdir(directory): #checks the directory for all .dat files
 		if f.endswith(".dat"): # searches only for .dat files
 			filename = (os.path.splitext(f)[0]) # gets the filename without the .dat extension
 			fullpath = directory + f # gets the full path
