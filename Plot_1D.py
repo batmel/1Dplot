@@ -32,6 +32,11 @@ try:
 except IndexError:
 	exit("Please specify input directory on command line: " + __file__ + " /path/to/dir")
 
+try:
+	output_dir = argv[2]
+except IndexError:
+	output_dir = input_dir
+
 def read_file(fullpath, integration_flag = False):
 	'''
 	reads the file and saves the values in a dataframe
@@ -49,7 +54,6 @@ def read_file(fullpath, integration_flag = False):
 	df.loc[:,2] *= CONVERSION_FACTOR
 
 	# we want to get the integrated data for the dose
-	# TODO: You should name your variables better: what kind of flag is it?
 	if integration_flag:
 		df[2] = df[2] * 2.2E10 * 3600 * 24 * 90 * 1E-3 # conversion factor * 90 days * kGy
 	df[3] = df[3]/100*df[2] # to get the absolute value for the errorbar
@@ -59,12 +63,11 @@ def read_file(fullpath, integration_flag = False):
 def plot_data(df, x_label, y_label, title, directory, filename):
 	''' function to plot the data '''
 
-	# use latex formatting if installed
-	try:
-		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif')
-	except RuntimeError:
-		print("Not using Latex. Not all dependencies are installed")
+	# NOTE uncomment if Latex is installed properly!
+	# plt.rc('text', usetex=True)
+	# plt.rc('font', family='serif')
+
+
 
 	fig = plt.figure(figsize=(12,9))
 	ax = fig.add_subplot(111, aspect='auto')
@@ -76,8 +79,8 @@ def plot_data(df, x_label, y_label, title, directory, filename):
 	ax.get_xaxis().tick_bottom()
 	ax.get_yaxis().tick_left()
 
-	plt.xticks(fontsize=12)
-	plt.yticks(fontsize=12)
+	plt.xticks(fontsize=18)
+	plt.yticks(fontsize=18)
 
 	ax.errorbar(
 			df[0],
@@ -93,17 +96,20 @@ def plot_data(df, x_label, y_label, title, directory, filename):
 
 	plt.xlabel(
 			x_label,
-			fontsize=18,
+			# fontsize=18,
+			fontsize=24,
 			labelpad=20)
 
 	plt.ylabel(
 			y_label,
-			fontsize=18,
+			# fontsize=18,
+			fontsize=24,
 			labelpad=20)
 
 	plt.title(
 			title,
-			fontsize=26)
+			# fontsize=26)
+			fontsize=30)
 
 	fig.text(
 			0.05,
@@ -117,107 +123,50 @@ def plot_data(df, x_label, y_label, title, directory, filename):
 	plt.tight_layout(pad=3, w_pad=1.0, h_pad=2)
 
 	path = "{}/{}.png".format(directory, filename)
-	fig.savefig(path.format(directory, filename), )
+	fig.savefig(path, )
 
 
 def derive_configuration(filename):
 	'''
 	Derive configuration of plot based on input.
 	'''
+	from constants import LABEL, y_labels, x_labels, y_units, x_units, flag_labels
 
-	LABEL = "{quality} [{unit}]"
-	KILOGRAY_POT = 'kGy/POT'
-	PER_SQUARE_CM_POT = '1/(cm^2 * POT)'
-	CM = "cm"
-
-	flag_labels = ["Dose"]
-
-	labels = {
-		"Dose": "Dose",
-		"1MeVN": "1MeVN",
-		"HEHeq": "HEHeq",
-		"HEH": "HEH",
-		"Neutron": "Neutron",
-		"ThNeutron": "Thermal Neutron",
-		"Proton": "Proton"
-	}
-
-	units = {
-		"Dose": KILOGRAY_POT,
-		"1MeVN": PER_SQUARE_CM_POT,
-		"HEHeq": PER_SQUARE_CM_POT,
-		"HEH": PER_SQUARE_CM_POT,
-		"Neutron": PER_SQUARE_CM_POT,
-		"ThNeutron": PER_SQUARE_CM_POT,
-		"Proton": PER_SQUARE_CM_POT
-	}
 
 	# set y label and flag
 	integration_flag = True # TODO I didn't check the purpose, just took the logic as it was: but setting this here to True is point less...
 	y_label = "unknown"
-	for label in labels:
+	for label in y_labels:
 		if label in filename:
-			y_label = LABEL.format(quality=labels[label], unit=units[label])
+			y_label = LABEL.format(quality=y_labels[label], unit=y_units[label])
 			if label in flag_labels:
 				integration_flag = True
 			break
 
 	# set x label
-	x_quality = ""
-	if "X" in filename:
-		x_quality = "X"
-	elif "Z" in filename:
-		x_quality = "Z"
-	x_quality += " Axis"
-	x_label = LABEL.format(quality=x_quality, unit=CM)
+	x_label = " Axis"
+	for label in x_labels:
+		if label in filename:
+			x_label = LABEL.format(quality=x_labels[label], unit=x_units[label])
+			break
+
 
 	# set title
 	title = filename.replace("_", " ")
 
 	return x_label, y_label, title, integration_flag
 
-	# flag = True
-	# if filename.find('Dose') > 0: # sets the Axis labels automatically, if it finds a substring
-	# 	y_label = "Dose [kGy/POT]"
-	# 	flag = True					# flag = True gives the integrated data for the y values
-	# elif filename.find('1MeVN') > 0:
-	# 	y_label = "1MeVN [1/(cm^2 * POT)]"
-	# elif filename.find('HEHeq') > 0:
-	# 	y_label = "HEHeq [1/(cm^2 * POT)]"
-	# elif filename.find('HEH') > 0:
-	# 	y_label = "HEH [1/(cm^2 * POT)]"
-	# elif filename.find('Neutron') > 0:
-	# 	y_label = "Neutron [1/(cm^2 * POT)]"
-	# elif filename.find('ThNeutron') > 0:
-	# 	y_label = "Thermal Neutron [1/(cm^2 * POT)]"
-	# elif filename.find('Proton') > 0:
-	# 	y_label = "Proton [1/(cm^2 * POT)]"
-	# else:
-	# 	y_label = "unknown"
-	#
-	# if filename.find('X') > 0:
-	# 	x_label = "X Axis [cm]"
-	# elif filename.find('Z') > 0:
-	# 	x_label = "Z Axis [cm]"
-	# else:
-	# 	x_label = " Axis [cm]"
-	#
-	# title = filename.replace("_", " ")
-	#
-	# return x_label, y_label, title, flag
-
-
-
-
-
-
 if __name__ == "__main__":
-	for f in os.listdir(directory): #checks the directory for all .dat files
-		if f.endswith(".dat"): # searches only for .dat files
-			filename = (os.path.splitext(f)[0]) # gets the filename without the .dat extension
-			fullpath = directory + f # gets the full path
-
-			x_label, y_label, title, flag = derive_configuration(filename)
-			df = read_file(fullpath, flag) # creates a dataframe object with the data
-			print("Creating plot for: {}" .format(filename))
-			plot_data(df, x_label, y_label, title, directory, filename)
+	# loop over content of input directory
+	for filename in os.listdir(input_dir):
+		# filter for .dat files
+		if filename.endswith(".dat"):
+			# remove extension from filename
+			filename_root = (os.path.splitext(filename)[0])
+			# get full path
+			fullpath = input_dir + filename
+			x_label, y_label, title, flag = derive_configuration(filename_root)
+			# create a dataframe object with the data
+			df = read_file(fullpath, flag)
+			print("Creating plot for: {}".format(filename_root))
+			plot_data(df, x_label, y_label, title, output_dir, filename_root)
