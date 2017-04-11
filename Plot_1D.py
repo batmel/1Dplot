@@ -29,11 +29,15 @@ from sys import exit
 # input_dir = "/Users/Mel/OneDrive/FLUKA/SMA/plots/sample1/"
 try:
 	input_dir = argv[1]
+	input_dir += "/"
+	input_dir = os.path.normcase(input_dir)
 except IndexError:
-	exit("Please specify input directory on command line: " + __file__ + " /path/to/dir")
+	exit("Please specify directories on command line: " + __file__ + " /path/to/input_dir /path/to/output_dir")
 
 try:
 	output_dir = argv[2]
+	output_dir += "/"
+	output_dir = os.path.normcase(output_dir)
 except IndexError:
 	output_dir = input_dir
 
