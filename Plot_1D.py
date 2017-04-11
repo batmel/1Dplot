@@ -50,8 +50,8 @@ def plot_data(df, x_label, y_label, title, directory, filename): # function to p
 def set_variables(filename):
 	flag = True
 	if filename.find('Dose') > 0: # sets the Axis labels automatically, if it finds a substring
-				y_label = "Dose [kGy/POT]"
-				flag = True					# flag = True gives the integrated data for the y values
+		y_label = "Dose [kGy/POT]"
+		flag = True					# flag = True gives the integrated data for the y values
 	elif filename.find('1MeVN') > 0:
 		y_label = "1MeVN [1/(cm^2 * POT)]"
 	elif filename.find('HEHeq') > 0:
